@@ -21,7 +21,7 @@ class LinkedList:
             print(current.value)
             current = current.next
         print(current.value)
-        print("gottem")
+        
 
 
 

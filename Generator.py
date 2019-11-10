@@ -1,45 +1,70 @@
+from DNDInitiativeTracker import Monster
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QInputDialog, QTableWidget, QTableWidgetItem, \
-    QStackedWidget, QFrame, QSplitter, QHBoxLayout
+    QStackedWidget, QFrame, QSplitter, QHBoxLayout, QLabel
 
 
 class Generator(QWidget):
-    initHeight = 500
-    initWidth = 500
+    initHeight = 1000
+    initWidth = 1000
     extraCount = 0
+    MonsterOrder = []
 
     def __init__(self):
         super().__init__()
 
-
-        self.resize(self.initHeight, self.initWidth)
-
         boxLayout = QHBoxLayout()
 
-        creatureDetails = QFrame()
-        creatureDetails.setFrameShape(QFrame.StyledPanel)
-
-        creatureTable = QTableWidget(self.getCreatureNum()[0],5)
-        creatureTable.setFrameShape(QFrame.StyledPanel)
-        creatureTable.setHorizontalHeaderItem(0,QTableWidgetItem("Creature Name"))
-        creatureTable.setHorizontalHeaderItem(0, QTableWidgetItem("Creature Initiative"))
-
+        creatureTable = QFrame()
+        #creatureInfo = QFrame()
         creatureOrder = QFrame()
 
-        topSplitter = QSplitter(Qt.Horizontal)
-        topSplitter.addWidget(creatureDetails)
-        topSplitter.addWidget(creatureTable)
+        creatureTable.setFrameShape(QFrame.StyledPanel)
+        #creatureInfo.setFrameShape(QFrame.StyledPanel)
+        creatureOrder.setFrameShape(QFrame.StyledPanel)
 
-        mainSplitter = QSplitter(Qt.Vertical)
-        mainSplitter.addWidget(topSplitter)
-        mainSplitter.addWidget(creatureOrder)
+        topRightPanelButtons = QSplitter(Qt.Horizontal)
+        addMonster = QPushButton("Add Monster")
+        addMonster.clicked.connect(self.addMonster)
+        removeMonster = QPushButton("Remove Monster")
+        removeMonster.clicked.connect(self.removeMonster)
+        topRightPanelButtons.addWidget(addMonster)
+        topRightPanelButtons.addWidget(removeMonster)
 
-        boxLayout.addWidget(mainSplitter)
+
+        topRightPanel = QSplitter(Qt.Vertical)
+        topRightPanel.addWidget(topRightPanelButtons)
+        topRightPanel.addWidget(creatureTable)
+
+        list = [100, 500]
+        topRightPanel.setSizes(list)
+
+        topPanel = QSplitter(Qt.Horizontal)
+        #topPanel.addWidget(creatureInfo)
+        topPanel.addWidget(topRightPanel)
+
+        list = [100, 500]
+        topPanel.setSizes(list)
+
+        self.mainPanel = QSplitter(Qt.Vertical)
+        self.mainPanel.addWidget(topPanel)
+        self.mainPanel.addWidget(creatureOrder)
+
+        list = [300,300]
+        self.mainPanel.setSizes(list)
+
+        self.resize(self.initHeight, self.initWidth)
+        boxLayout.addWidget(self.mainPanel)
         self.setLayout(boxLayout)
 
-    def getCreatureNum(self):
-        numberOfCreatures = QInputDialog.getInt(self, "Get Number of Creatures", "Input a number", 0, 0, 100, 1)
-        return  numberOfCreatures
+    def addMonster(self):
+        monster = Monster.Monster()
+        print(monster)
+        self.mainPanel.addWidget(QLabel(monster.__str__()))
 
+
+
+    def removeMonster(self):
+        print("Remove")
 
 

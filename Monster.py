@@ -7,8 +7,7 @@ class Monster():
 
     def __init__(self):
         data, ok = MonsterDialog.getDateTime()
-        if ok:
-            print(data)
+
 
         self.name = data[0]
         self.health = data[1]

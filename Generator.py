@@ -4,11 +4,10 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QFrame, QSplitter, QHBoxLayout, QLabel, QListWidget, \
     QLineEdit
 
-
+# Makes the application
 class Generator(QWidget):
     initHeight = 1000
     initWidth = 1000
-    extraCount = 0
 
     def __init__(self):
         super().__init__()
@@ -19,8 +18,7 @@ class Generator(QWidget):
         monster = Monster.Monster()
         item = customItem.CustomListWidgetItem()
         item.setText(monster.name)
-        data = [monster.name, monster.health, monster.initiative]
-        item.setData(Qt.UserRole,data)
+        item.setData(Qt.UserRole,monster)
         self.creatureOrder.addItem(item)
 
 
@@ -34,22 +32,23 @@ class Generator(QWidget):
 
     def displayMonster(self, item):
         data = item.data(Qt.UserRole)
-
-
         self.currentlySelected = item
-        self.creatureInfo.update(data[0],data[1],data[2])
+        self.creatureInfo.update(data)
 
+
+
+
+
+    # This method is the code for the main window
     def makeWindow(self):
         boxLayout = QHBoxLayout()
 
-        self.creatureInfo = displayInformation()
+        self.creatureInfo = self.displayInformation(self)
         self.creatureOrder = QListWidget()
         self.creatureOrder.setSortingEnabled(True)
         self.creatureOrder.setFlow(self.creatureOrder.LeftToRight)
         self.creatureOrder.itemClicked.connect(self.displayMonster)
         self.creatureOrder.itemClicked.connect(self.displayMonster)
-
-        #self.creatureInfo.setFrameShape(QFrame.StyledPanel)
         self.creatureOrder.setFrameShape(QFrame.StyledPanel)
 
         topRightPanelButtons = QSplitter(Qt.Horizontal)
@@ -84,29 +83,66 @@ class Generator(QWidget):
         boxLayout.addWidget(self.mainPanel)
         self.setLayout(boxLayout)
 
-class displayInformation(QWidget):
+    # This class creates an object of the widget that displays the information
+    class displayInformation(QWidget):
 
-    def __init__(self):
-        super().__init__()
-        self.monsterName = "Monster Name"
-        self.monsterHealth = "Monster Health"
-        self.monsterInitiatve = "Monster Initiative"
+        def __init__(self, parent):
+            super().__init__()
+            self.parent = parent
+            self.mostRecent = None
+            self.monsterName = "Monster Name"
+            self.monsterHealth = "Monster Health"
+            self.monsterInitiatve = "Monster Initiative"
+            self.monsterAC = "Monster Armor Class"
 
-        self.labelList = [QLabel(self.monsterName),QLabel(self.monsterHealth), QLabel(self.monsterInitiatve)]
-        self.editList = [QLineEdit(),QLineEdit(),QLineEdit()]
+            self.labelList = [QLabel(self.monsterName), QLabel(self.monsterHealth), QLabel(self.monsterInitiatve), QLabel(self.monsterAC)]
 
-        self.layout = QVBoxLayout()
-        for i in range(len(self.labelList)):
-            self.layout.addWidget(self.labelList[i])
-            self.layout.addWidget(self.editList[i])
+            self.changeNameLine = QLineEdit()
+            self.changeNameLine.returnPressed.connect(self.changeName)
+            self.changeHealthLine = QLineEdit()
+            self.changeHealthLine.returnPressed.connect(self.changeHealth)
+            changeInit = QLineEdit()
+            changeMonsterAC = QLineEdit()
+
+            self.editList = [self.changeNameLine, self.changeHealthLine, changeInit, changeMonsterAC]
+
+            self.layout = QVBoxLayout()
+            for i in range(len(self.labelList)):
+                self.layout.addWidget(self.labelList[i])
+                self.layout.addWidget(self.editList[i])
+
+            self.setLayout(self.layout)
+
+        def update(self, data):
+            self.mostRecent = data
+            self.labelList[0].setText("Name: " + str(data.name))
+            self.labelList[1].setText("Health: " + str(data.health))
+            self.labelList[2].setText("Initiative: " + str(data.initiative))
+            self.labelList[3].setText("Armor Class: " + str(data.ac))
+
+
+        def changeHealth(self):
+            newHealth = self.changeHealthLine.text()
+            if (newHealth == ""):
+                return
+            self.mostRecent.health = newHealth
+            self.labelList[1].setText("Health: " + str(newHealth))
+            self.changeHealthLine.setText("")
+
+        def changeName(self):
+            oldName = self.mostRecent.name
+            newName = self.changeNameLine.text()
+            if (newName == ""):
+                return
+            self.mostRecent.name = newName
+            self.labelList[0].setText("Name: " + str(newName))
+            self.changeNameLine.setText("")
 
 
 
-        self.setLayout(self.layout)
 
-    def update(self, name, health, init):
-        self.labelList[0].setText("Name: " +  str(name))
-        self.labelList[1].setText("Health: " + str(health))
-        self.labelList[2].setText("Initiative: " + str(init))
+
+
+
 
 

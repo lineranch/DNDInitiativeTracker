@@ -2,7 +2,7 @@
 import sys
 from functools import partial
 from PyQt5.Qt import Qt
-from PyQt5.QtWidgets import QApplication, QDialog, QDialogButtonBox, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QSplitter, QWidget, QVBoxLayout
+from PyQt5.QtWidgets import QApplication, QDialog, QDialogButtonBox, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QSplitter, QTextEdit, QWidget, QVBoxLayout
 
 
 
@@ -17,6 +17,7 @@ class InititativeTracker(QWidget):
     def makeApplication(self):
         applicationLayout = QVBoxLayout()
         buttonLayer = self.makeButtonLayer()
+        statOrderSplitter = QSplitter(Qt.Vertical)
         self.statLayer = MonsterInformation()
         self.orderLayer = QListWidget()
         self.orderLayer.setSortingEnabled(True)
@@ -24,11 +25,13 @@ class InititativeTracker(QWidget):
         self.orderLayer.itemClicked.connect(self.displayMonster)
 
         applicationLayout.addLayout(buttonLayer)
-        applicationLayout.addWidget(self.statLayer)
-        applicationLayout.addWidget(self.orderLayer)
+        statOrderSplitter.addWidget(self.statLayer)
+        statOrderSplitter.addWidget(self.orderLayer)
+        applicationLayout.addWidget(statOrderSplitter)
 
 
         self.setLayout(applicationLayout)
+        self.resize(1000,500)
 
     def makeButtonLayer(self):
         lay = QHBoxLayout()
@@ -71,15 +74,23 @@ class MonsterInformation(QWidget):
         self.monsterName = QLabel("Monster Name")
         self.monsterHealth = QLabel("Monster Health")
         self.monsterInitiatve = QLabel("Monster Initiative")
+        self.monsterAC = QLabel("Monster Armor Class")
+        self.monsterNotes = QTextEdit()
+        self.monsterNotes.textChanged.connect(self.updateNotes)
 
+        statsLay = QHBoxLayout()
 
-        self.layout = QVBoxLayout()
-        self.layout.addWidget(self.monsterName)
-        self.layout.addWidget(self.monsterHealth)
-        self.layout.addLayout(self.makeAddSubButts())
-        self.layout.addWidget(self.monsterInitiatve)
+        attributes = QVBoxLayout()
+        attributes.addWidget(self.monsterName)
+        attributes.addWidget(self.monsterHealth)
+        attributes.addLayout(self.makeAddSubButts())
+        attributes.addWidget(self.monsterInitiatve)
+        attributes.addWidget(self.monsterAC)
 
-        self.setLayout(self.layout)
+        statsLay.addLayout(attributes,50)
+        statsLay.addWidget(self.monsterNotes, 50)
+
+        self.setLayout(statsLay)
 
     def makeAddSubButts(self):
         lay = QHBoxLayout()
@@ -87,8 +98,10 @@ class MonsterInformation(QWidget):
         self.editLine = QLineEdit()
         self.addHealth = QPushButton("Add Health")
         self.addHealth.clicked.connect(partial(self.changeHealth, self.addHealth))
+        self.addHealth.setStyleSheet("QPushButton {background-color: #33FF74;}")
         self.removeHealth = QPushButton("Remove Health")
         self.removeHealth.clicked.connect(partial(self.changeHealth, self.removeHealth))
+        self.removeHealth.setStyleSheet("QPushButton {background-color: #B33634;}")
 
         lay.addWidget(self.editLine)
         lay.addWidget(self.addHealth)
@@ -115,7 +128,12 @@ class MonsterInformation(QWidget):
         self.monsterName.setText("Name: " +  str(item.name))
         self.monsterHealth.setText("Health: " + str(item.health))
         self.monsterInitiatve.setText("Initiative: " + str(item.initiative))
+        self.monsterAC.setText("Armor Class: " + str(item.AC))
+        self.monsterNotes.setText(item.notes)
 
+    def updateNotes(self):
+        if (self.currentlySelected != None):
+            self.currentlySelected.notes = self.monsterNotes.toPlainText()
 
 class CustomItem(QListWidgetItem):
     def __lt__(self, other):
@@ -139,6 +157,8 @@ class Monster():
         self.name = data[0]
         self.health = int(data[1])
         self.initiative = data[2]
+        self.AC = data[3]
+        self.notes = ""
 
 
     def __str__(self):
@@ -156,6 +176,7 @@ class MonsterDialog(QDialog):
         self.nameLine = QLineEdit()
         self.healthLine = QLineEdit()
         self.initLine = QLineEdit()
+        self.acLine = QLineEdit()
 
         innerVBox = QVBoxLayout()
         innerHBox = QHBoxLayout()
@@ -167,6 +188,8 @@ class MonsterDialog(QDialog):
         innerVBox.addWidget(self.healthLine)
         innerVBox.addWidget(QLabel("Enter Initiative"))
         innerVBox.addWidget(self.initLine)
+        innerVBox.addWidget(QLabel("Enter Armor Class"))
+        innerVBox.addWidget(self.acLine)
 
         #Using the dialog class, I made a button for okay and cancel
         buttons = QDialogButtonBox(
@@ -188,6 +211,7 @@ class MonsterDialog(QDialog):
         data.append(self.nameLine.text())
         data.append(self.healthLine.text())
         data.append(self.initLine.text())
+        data.append(self.acLine.text())
         return data
 
     # static method to create the dialog and return (date, time, accepted)

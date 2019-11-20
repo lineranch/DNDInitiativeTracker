@@ -1,7 +1,7 @@
 #This code is a refactored version of DNDInititativeDriver.py, Generator.py, Monster.py, and customItem.py
 import sys
 from functools import partial
-from PyQt5.Qt import Qt
+from PyQt5.Qt import QIntValidator, Qt
 from PyQt5.QtWidgets import QApplication, QDialog, QDialogButtonBox, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QSplitter, QTextEdit, QWidget, QVBoxLayout
 
 
@@ -48,6 +48,8 @@ class InititativeTracker(QWidget):
 
     def addMonster(self):
         monster = Monster()
+        if monster.flag == False:
+            return
         item = CustomItem(monster.name)
         item.setData(Qt.UserRole,monster)
         self.orderLayer.addItem(item)
@@ -121,7 +123,7 @@ class MonsterInformation(QWidget):
                 self.update(self.currentlySelected)
             self.editLine.setText("")
         except Exception:
-            print("BAD INPUT")
+            print("No creature health to affect")
 
     def update(self, item):
         self.currentlySelected = item
@@ -152,13 +154,21 @@ class CustomItem(QListWidgetItem):
 class Monster():
 
     def __init__(self):
-        data, ok = MonsterDialog.getDateTime()
+        data, ok = MonsterDialog.getMonsterData()
+
+        # This try block helps ensure that the program won't crash when the user exits out of the monster dialog window
+        if ("" in data):
+            self.flag = False
+            return
 
         self.name = data[0]
         self.health = int(data[1])
         self.initiative = data[2]
         self.AC = data[3]
         self.notes = ""
+        self.flag = True
+
+
 
 
     def __str__(self):
@@ -175,8 +185,11 @@ class MonsterDialog(QDialog):
 
         self.nameLine = QLineEdit()
         self.healthLine = QLineEdit()
+        self.healthLine.setValidator(QIntValidator())
         self.initLine = QLineEdit()
+        self.initLine.setValidator(QIntValidator())
         self.acLine = QLineEdit()
+        self.acLine.setValidator(QIntValidator())
 
         innerVBox = QVBoxLayout()
         innerHBox = QHBoxLayout()
@@ -205,8 +218,7 @@ class MonsterDialog(QDialog):
 
         self.setLayout(outerBox)
 
-    # get current date and time from the dialog
-    def dateTime(self):
+    def monsterData(self):
         data = []
         data.append(self.nameLine.text())
         data.append(self.healthLine.text())
@@ -214,12 +226,12 @@ class MonsterDialog(QDialog):
         data.append(self.acLine.text())
         return data
 
-    # static method to create the dialog and return (date, time, accepted)
     @staticmethod
-    def getDateTime(parent = None):
+    def getMonsterData(parent = None):
         dialog = MonsterDialog(parent)
         result = dialog.exec_()
-        data = dialog.dateTime()
+        data = dialog.monsterData()
+
 
         return (data, result == QDialog.Accepted)
 
@@ -229,6 +241,7 @@ class MonsterDialog(QDialog):
 
 def main():
     app = QApplication(sys.argv)
+    app.setStyle('Fusion')
     ex = InititativeTracker()
     ex.show()
     sys.exit(app.exec())

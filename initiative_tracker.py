@@ -38,10 +38,13 @@ class InititativeTracker(QWidget):
 
         addMonsterButt = QPushButton("Add Monster")
         addMonsterButt.clicked.connect(self.addMonster)
-        removeMonsterButt = QPushButton("Remove Monster")
+        addPlayerButt = QPushButton("Add Player")
+        addPlayerButt.clicked.connect(self.addPlayer)
+        removeMonsterButt = QPushButton("Remove Creature")
         removeMonsterButt.clicked.connect(self.removeMonster)
 
         lay.addWidget(addMonsterButt)
+        lay.addWidget(addPlayerButt)
         lay.addWidget(removeMonsterButt)
 
         return lay
@@ -54,6 +57,13 @@ class InititativeTracker(QWidget):
         item.setData(Qt.UserRole,monster)
         self.orderLayer.addItem(item)
 
+    def addPlayer(self):
+        player = Player()
+        if player.flag == False:
+            return
+        item = CustomItem(player.name)
+        item.setData(Qt.UserRole,player)
+        self.orderLayer.addItem(item)
 
 
     def removeMonster(self):
@@ -124,20 +134,43 @@ class MonsterInformation(QWidget):
                 self.update(self.currentlySelected)
             self.editLine.setText("")
         except Exception:
-            print("No creature health to affect")
+            self.editLine.setText("")
+            print("Can't change the health of a Player")
 
     def update(self, item):
-        self.currentlySelected = item
-        self.monsterName.setText("Name: " +  str(item.name))
-        self.monsterHealth.setText("Health: " + str(item.health))
-        self.monsterInitiatve.setText("Initiative: " + str(item.initiative))
-        self.monsterAC.setText("Armor Class: " + str(item.AC))
-        self.monsterNotes.setText(item.notes)
+        def show():
+            self.editLine.setVisible(True)
+            self.addHealth.setVisible(True)
+            self.removeHealth.setVisible(True)
+
+        def hide():
+            self.editLine.setVisible(False)
+            self.addHealth.setVisible(False)
+            self.removeHealth.setVisible(False)
+
+        self.editLine.setText("")
+        if (isinstance(item, Monster)):
+            self.currentlySelected = item
+            show()
+            self.monsterName.setText("Name: " +  str(item.name))
+            self.monsterHealth.setText("Health: " + str(item.health))
+            self.monsterInitiatve.setText("Initiative: " + str(item.initiative))
+            self.monsterAC.setText("Armor Class: " + str(item.AC))
+            self.monsterNotes.setText(item.notes)
+        elif(isinstance(item, Player)):
+            self.currentlySelected = item
+            hide()
+            self.monsterName.setText("Name: " + str(item.name))
+            self.monsterHealth.setText("")
+            self.monsterInitiatve.setText("Initiative: " + str(item.initiative))
+            self.monsterAC.setText("")
+            self.monsterNotes.setText(item.notes)
 
     def updateNotes(self):
         if (self.currentlySelected != None):
             self.currentlySelected.notes = self.monsterNotes.toPlainText()
 
+# This class exists to sort creatures and players by initiative
 class CustomItem(QListWidgetItem):
     def __lt__(self, other):
         try:
@@ -169,15 +202,28 @@ class Monster():
         self.notes = ""
         self.flag = True
 
-
-
-
     def __str__(self):
 
         return "Monster Name : " + self.name + " Monster Health: " + self.health + " Monster Init: " + self.initiative
 
+class Player():
 
+    def __init__(self):
+        data, ok = PlayerDialog.getPlayerData()
 
+        # This try block helps ensure that the program won't crash when the user exits out of the monster dialog window
+        if ("" in data):
+            self.flag = False
+            return
+
+        self.name = data[0]
+        self.initiative = data[1]
+        self.notes = ""
+        self.flag = True
+
+    def __str__(self):
+
+        return "Player Name : " + self.name + "Monster Init: " + self.initiative
 
 # This block creates a window to input monster information
 class MonsterDialog(QDialog):
@@ -238,6 +284,54 @@ class MonsterDialog(QDialog):
 
 # https://stackoverflow.com/questions/18196799/how-can-i-show-a-pyqt-modal-dialog-and-get-data-out-of-its-controls-once-its-clo
 
+# This block creates a window to input player information
+class PlayerDialog(QDialog):
+    def __init__(self, parent = None):
+        super(PlayerDialog, self).__init__(parent)
+
+        self.nameLine = QLineEdit()
+        self.initLine = QLineEdit()
+        self.initLine.setValidator(QIntValidator())
+
+        innerVBox = QVBoxLayout()
+        innerHBox = QHBoxLayout()
+        outerBox = QVBoxLayout()
+
+        innerVBox.addWidget(QLabel("Enter Name:"))
+        innerVBox.addWidget(self.nameLine)
+        innerVBox.addWidget(QLabel("Enter Initiative"))
+        innerVBox.addWidget(self.initLine)
+
+        #Using the dialog class, I made a button for okay and cancel
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
+            Qt.Horizontal, self)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+
+        innerHBox.addWidget(buttons)
+
+        outerBox.addLayout(innerVBox)
+        outerBox.addLayout(innerHBox)
+
+        self.setLayout(outerBox)
+
+    def PlayerData(self):
+        data = []
+        data.append(self.nameLine.text())
+        data.append(self.initLine.text())
+        return data
+
+    @staticmethod
+    def getPlayerData(parent = None):
+        dialog = PlayerDialog(parent)
+        result = dialog.exec_()
+        data = dialog.PlayerData()
+
+
+        return (data, result == QDialog.Accepted)
+
+# https://stackoverflow.com/questions/18196799/how-can-i-show-a-pyqt-modal-dialog-and-get-data-out-of-its-controls-once-its-clo
 
 
 def main():

@@ -98,6 +98,7 @@ class MonsterInformation(QWidget):
         lay = QHBoxLayout()
 
         self.editLine = QLineEdit()
+        self.editLine.setValidator(QIntValidator())
         self.addHealth = QPushButton("Add Health")
         self.addHealth.clicked.connect(partial(self.changeHealth, self.addHealth))
         self.addHealth.setStyleSheet("QPushButton {background-color: #33FF74;}")
